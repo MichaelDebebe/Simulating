@@ -1,0 +1,1064 @@
+---
+title: "sim"
+author: "Michael Debebe, Max Johansson"
+date: "2022-11-09"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+libraries <-
+  c(
+    "survey",
+    "dplyr",
+    "ggplot2",
+    "LaplacesDemon",
+    "ohenery",
+    "heemod",
+    "readr",
+    "Metrics",
+    "knitr",
+    "dplyr",
+    "tidyr",
+    "pivottabler"
+  )
+#require(libraries)
+invisible(lapply(libraries, require, character.only = TRUE))
+set.seed(111111111)
+```
+
+```{r}
+Sex <- sample(
+  c("Male", "Female"),
+  # här skapar vi ett "sample" med två kön
+  size = 7775390,
+  # här bestämmer vi storleken på vårat "sample"
+  replace = TRUE,
+  # och sätter replace = TRUE, rakt upp och ner
+  prob = c(3853029,3922361) / 7775390
+)
+# här sätter vi en sannolikhetsvektor för våran Kön-variabel. En för varje kön.
+
+Age <- sample(
+  c("18-21", "22-29", "30-64", "65-"),
+  # Här skapar vi ett "sample" på fem stycken åldersgrupper.
+  size = 7775390,
+  # och storleken ska vara samma som våran Kön-variabel eftersom varje kön måste ha en ålder.
+  replace = TRUE,
+  # och replace = TRUE
+  prob = c(439311, 887771, 4331814, 2116494) / 7775390
+)
+# här skapar vi en ny sannolikhetsvektor för Ålder-variabeln. En för varje åldersgrupp
+
+proba <- c(
+  0.015663394,
+  0.028467254,
+  
+  0.006208563,
+  
+  0.028473813,
+  
+  0.033283732,
+  
+  0.013036388,
+  
+  0.034939212,
+  
+  0.024407908,
+  
+  0.019022840,
+  
+  0.024823321,
+  
+  0.132749868,
+  
+  0.223081415,
+  
+  0.028778878,
+  
+  0.037587182,
+  
+  0.027865612,
+  
+  0.026942057,
+  
+  0.024248559,
+  
+  0.026799427,
+  
+  0.167967266,
+  
+  0.029840818,
+  
+  0.045812493
+)
+
+
+
+Countys <-
+  c(
+    "Blekinge",
+    "Dalarna",
+    "Gotland",
+    "Gävleborg",
+    "Halland"  ,
+    "Jämtland" ,
+    "Jönköping"  ,
+    "Kalmar",
+    "Kronoberg" ,
+    "Norrbotten",
+    "Skåne"     ,
+    "Stockholm" ,
+    "Södermanland" ,
+    "Uppsala"  ,
+    "Värmland",
+    "Västerbotten"   ,
+    "Västernorrland",
+    "Västmanland"  ,
+    "Västra Götaland",
+    "Örebro" ,
+    "Östergötland"
+  )
+
+Lon <- sample(c(1:21),
+              size = 7775390,
+              replace = TRUE,
+              prob = proba)
+
+
+
+sim_pop <- data.frame(Sex = Sex, Age = Age, County = Lon)
+rm(Sex)
+rm(Age)
+rm(Lon)
+
+positioner <-c("S", "SD", "M", "V", "C", "KD", "MP", "L", "Oth")
+positioner <-rev(positioner)
+positioner1 <-c("Date","House", "n", "Oth", "L",   "MP",  "KD",  "C",   "V",   "M",   "SD", "S")
+```
+
+
+
+```{r }
+#Här hämtas valdeltagande per län in för att ge de simulerade individerna olika sannolikheter att rösta
+lan <- read_delim("C:/Users/black/OneDrive/Dokument/lan.txt", 
+    delim = "\t", escape_double = TRUE, 
+    trim_ws = TRUE)
+
+lan <- aggregate(cbind(Rostade,RB) ~ Valkrets, lan, sum)
+prob <-lan$Rostade/lan$RB
+
+
+
+
+
+for(i in 1:21){
+  sim_pop$VoteRate[sim_pop$County==i] <-prob[i]
+  
+}
+
+
+#Sannolikheter att rösta
+
+sim_pop$Voted <- rbinom(n = length(sim_pop$Sex), size = 1, prob = sim_pop$VoteRate)
+rm(lan)
+rm(prob)
+```
+
+
+```{r}
+#Sannolikheter att olika åldersgrupper och kön röstar på olika partier
+
+#Ordning: M","SD","S","V","C","KD","L","MP","Övr"
+
+#Kvinnor
+e1 <-c(23,12,22,12.5,12.5,6,4,7,1)
+e2 <-c(19,17,34,7.5,7.5,6,4,7,1)
+e3 <-c(18.1,17,33.9,7,7,6,4,7,1)
+e4 <-c(15,17,41,4.2,7.2,4.6,6,4,1)
+
+
+
+#Män
+m1 <-c(26,26,18,8,5,5,6,4,2)
+m2 <-c(21.5,25.5,25,6.5,6,5,5,4,2.5)
+m3 <-c(21.5,25.5,25,6.5,6,5,5,4,2.5)
+m4 <-c(18.3,22.3,30.1,8.1,6.7,5.5,3.8,4.2,1)
+e <-rbind(e1,e2,e3,e4)
+m <-rbind(m1,m2,m3,m4)
+for(i in 1:4){
+  e[i,] <-normalize(e[i,])*100
+}
+
+for(i in 1:4){
+  m[i,] <-normalize(m[i,])*100
+}
+
+#Tar bort objekten för att spara plats
+rm(list =e1,e2,e3,e4)
+rm(list = m1,m2,m3,m4)
+rm(e1)
+rm(m1)
+```
+
+```{r}
+#Skapar ett subset med de observationerna som har röstat och inte.
+Roster <-subset(sim_pop,Voted ==1)
+Ejrostat <-subset(sim_pop,Voted !=1)
+
+#Ger de som ej röstat, partiet "Ej"
+Ejrostat$Party <-"NA"
+
+#Kodar om åldersgrupperna för att enklare kunna tilldela sannolikhter
+Roster$Age <-recode(Roster$Age,'18-21'=1,"22-29"=2,"30-64"=3, "65-"=4)
+rm(Ejrostat)
+```
+
+
+
+
+\pagebreak
+
+```{r }
+#Kvinnligt subset och sorterar det på ålder
+kvinnor <-subset(Roster,Sex=="Female")
+kvinnor <-arrange(kvinnor, Age)
+
+#Manligt subset och sorterar det på ålder
+men <-subset(Roster,Sex!="Female")
+men <-arrange(men, Age)
+
+#Tilldelar varje observation ett parti sannolikheter baserat på ålder och kön
+#Kvinnor
+
+for(i in 1:4){
+  P <-c("M","SD","S","V","C","KD","L","MP","Oth")
+  kvinnor$Party[kvinnor$Age==i] <-sample(P,
+                                   size =length(kvinnor$Age[kvinnor$Age==i]),replace=TRUE,
+                                   prob=e[i,] )
+}
+
+
+#Män
+for(i in 1:4){
+  P <-c("M","SD","S","V","C","KD","L","MP","Oth")
+  men$Party[men$Age==i] <-sample(P,
+                                   size =length(men$Age[men$Age==i]),replace=TRUE,
+                                   prob=m[i,] )
+}
+
+
+#Binder ihop kvinnor och Män för att ha det slutgiltiga datasetet
+valet <-rbind(men,kvinnor)
+valet$Age <-recode(valet$Age, "1"='18-21'," 2" = "22-29", "3"="30-64", "4" = "65-")
+
+
+rm(e)
+rm(m)
+rm(kvinnor)
+rm(men)
+
+
+#Ser över fördelningen i vår population.
+t <-count(valet,Party)
+t$n <-t$n/sum(t$n)
+t$n <-t$n*100
+santbre<-t$n
+tr <-santbre
+sant <-santbre
+
+tika <-sample(1:6532234,10,replace = FALSE)
+tika <-valet[tika,]
+kable(tika)
+rm(tika)
+```
+
+
+
+
+
+
+
+```{r Hur bra populationerna gör sig}
+andelvs<-function(valet,t,s){
+  set.seed(t)
+  knit <-slice_sample(valet,n=s,replace = FALSE)
+  t <-count(knit,Party)
+t$n <-t$n/sum(t$n)*100
+colnames(t)[2] <-"Procent"
+t <-cbind(t,tr)
+t <-rbind(t,t)
+t$Procent[10:18] <-tr
+colnames(t)[3] <-"Procent i valet"
+t$Source <-rep(c("Simulated","Election Result"),each=9)
+t <-t[,c(1:2,4)]
+  print(t)
+}
+t <-andelvs(valet,111111111,10000)
+
+ggplot(t,aes(x=Party,y=Procent,col=Source))+
+  geom_point()+xlab("Party")+theme_bw()+ylab("Election results in percent units")+
+  ggtitle("Election results versus simulated election results")+
+  scale_y_continuous(breaks = seq(0,33,by=0.5))+ labs(caption = "(Sample Size:15000)")
+```
+
+## Including Plots
+
+
+```{r}
+#här skapar vi sannolikheterna för olika åldrars respons samt en specifik repsons för män
+
+#Skapar en ny variabel (Partysize), som kodar om S,M och SD till stora partier och resten till små.
+valet$Partysize <-ifelse(valet$Party%in%c("S","M","SD"),"Large","Small")
+
+
+#Skapar variabeln politiskt intresse och sätter den till 0.5 för samtliga observationer.
+valet$PI <-0.4
+
+
+#Då män har i snitt 15 procentenheters högre politiskt intresse ökar den med 15 % om det är en man.
+valet$PI <-ifelse(valet$Sex=="Male",valet$PI*1.1,valet$PI)
+
+#Politiskt intresse är dessutom vanligare bland mindre partier eller partier som är mer polariserade.
+valet$PI <-ifelse(valet$Partysize=="Small",valet$PI*1.1,valet$PI)
+
+valet$PolI <- rbinom(n = length(valet$PI), size = 1, prob = valet$PI)
+
+count(valet,PolI,Sex,Partysize)[,4]/6547392
+
+rm(Roster)
+```
+
+```{r Bortfallsanalys}
+knit <-valet %>%
+  slice_sample(n=10000,replace = FALSE)
+
+bortfallsanalys <- glm(PolI ~Sex + Age + County+Partysize,
+family = binomial(logit),
+data = knit)
+
+summary(bortfallsanalys)
+
+#valet$County <-Countys[match(valet$County,c(1:21)) ]
+
+tika <-sample(252545:6532234,10,replace = FALSE)
+tika <-valet[tika,]
+tika <-kable(tika)
+tika
+```
+
+
+
+
+```{r Någon funktion}
+testar1 <-function(alla){
+  binom <-function(n,k,p){
+  
+  ksuc <-(factorial(n))/(factorial(k)*factorial(n-k))*(p^k)*(1-p)^(n-k)
+  print(ksuc)
+}
+  for(i in 1:9){
+    alla[,i] <-ifelse(alla[,i]>0,"Over","Under")
+  }
+  alla <-pivot_longer(alla,Oth:SD)
+  t <-(count(alla,name,Year,value))
+  t <-arrange(t,desc(Year))
+colnames(t)[1:4] <-c("Party","Year","Estimation","Count")
+t$N <-rep(c(8,8,8,8),c(17,17,15,18))
+t$pval <-binom(t$N,t$Count,0.5)
+t$pval <-round(t$pval,digits=3)
+  print(t)
+}
+```
+
+
+
+```{r Tester för sista undersökningarna}
+git <-read.csv("https://raw.githubusercontent.com/hampusborgos/SwedishPolls/master/Data/Polls.csv")
+git$Date <-as.Date(git$PublDate)
+colnames(git)[18] <-c("House")
+git$House <-ifelse(git$House=="Inizio","Demoskop",git$House)
+git <-git[git$House!="YouGov",]
+git <-git[git$House!="United Minds",]
+git <-git[git$House!="Infostat",]
+git <-git[git$House!="TV4",]
+dit <-git
+git1 <-git
+git2 <-git
+git3 <-git
+git <-git %>% filter(Date < '2022-09-12')
+git1 <- git%>% filter(Date < '2018-09-10')
+git2 <- git%>% filter(Date < '2014-09-15')
+git3 <-  git%>% filter(Date < '2010-09-20')
+n <-git$n
+ df <-list(git,git1,git2,git3)
+#Den riktiga
+for(i in 1:4){
+  df[[i]]<-df[[i]][-c(1,2,11,12,14:17)]
+  df[[i]] <-df[[i]] %>%
+    group_by(df[[i]]["House"]) %>%
+    arrange(df[[i]]["Date"]) %>%
+    filter(row_number()==n())
+  df[[i]]["Oth"] <-100-rowSums(df[[i]][,1:8])
+df[[i]] <-df[[i]][,c(12,1:8,9,10,11)]
+}
+
+
+#Tabell 1
+
+fittan <-df[[1]][c(1:9,12,11)]
+andra <-fittan[,c(10:11)]
+fittan <-fittan[,1:9]
+fittan <-fittan[rev(positioner)]
+fittan <-cbind(fittan,andra)
+fittan <-kable(fittan,format="latex")
+fittan
+
+
+resultat1 <-c(1.54,19.10,4.61,6.71,5.34, 30.33,6.75,5.08,20.54)
+resultat2 <-c(1.54,19.84,5.49,8.61,6.32,28.26,8,4.41,17.53)
+resultat3 <-c(4.05,23.33,5.42,6.11,4.57,31.01,5.72,6.89,12.9)
+resultat4 <-c(1.43,30.06,7.06,6.56,5.60,30.66,5.60,7.34,5.70)
+resultat <-rbind(resultat1,resultat2,resultat3,resultat4)
+
+for(i in 1:4){
+  df[[i]][1:9] <-df[[i]][1:9]-rbind(resultat[i,],resultat[i,],resultat[i,],resultat[i,],resultat[i,],resultat[i,],resultat[i,],resultat[i,])
+  
+}
+
+for(i in 1:4){
+df[[i]] <-df[[i]][rev(positioner1)]
+}
+
+for(i in seq_along(df)){
+  assign(letters[i], as.data.frame(df[[i]]))
+}
+
+abcd <-rbind(a,b,c,d)
+
+abcd$Year <-format(abcd$Date,format="%Y")
+
+
+testa2 <-function(alla){
+  for(i in 1:9){
+    alla[,i] <-ifelse(alla[,i]>0,"Over","Under")
+  }
+  alla <-pivot_longer(alla,Oth:SD)
+  t <-(count(alla,value,name,Year))
+  colnames(t)[1:3] <-c("Estimation","Party","Count")
+  print(t)
+}
+
+
+
+
+testare3 <-function(alla){
+  binom <-function(n,k,p){
+  
+  ksuc <-(factorial(n))/(factorial(k)*factorial(n-k))*(p^k)*(1-p)^(n-k)
+  print(ksuc)
+}
+  for(i in 1:9){
+    alla[,i] <-ifelse(alla[,i]>0,"Over","Under")
+  }
+  alla <-pivot_longer(alla,S:Oth)
+  t <-(count(alla,name,Year,value))
+  t <-arrange(t,desc(Year))
+colnames(t)[1:4] <-c("Party","Year","Estimation","Count")
+t$N <-rep(8,times=length(t$Party))
+t$pval <-binom(t$N,t$Count,0.5)
+t$pval <-round(t$pval,digits=3)
+  print(t)
+}
+
+alla1 <-testare3(abcd)
+
+ggplot(alla1, aes(x = Party, y = Count,fill=Estimation)) +
+  geom_col() +
+  coord_flip()+theme_bw()+scale_fill_manual(values=(c("grey","black")))+
+  theme(axis.title.y = element_text(angle = 0))+ylab("Number of polls ")+ggtitle("Bias test for Estimations of Parties in polls 2010-2022")+geom_text(
+    aes(label = pval),
+    colour = "white", size = 2.8,
+    vjust = 0.5,hjust=1
+  )+facet_wrap(~Year)+xlab("Party")+scale_x_discrete(limits = positioner)
+
+
+
+#Tabell 2 
+Women <-c(212602,431773,1231291,2180591,3922361)
+Men <-c(226709,455998,1253421,2151223,3853029)
+Total <-Women+Men
+Eligblevoters <-cbind.data.frame(Women,Men,Total)
+rownames(Eligblevoters) <-c("Ages 18-21", "Ages 22-29","Ages 30-64","Ages 65-","Total")
+Eligblevoters
+eligblevoters <-kable(Eligblevoters,format="latex")
+
+
+#Table 3
+Age <-c("18-30","31-64","65+","18-30","31-64","65+")
+kon <-c("Female","Female","Female","Male","Male","Male")
+V <-c(13,7,4,8,6,4)
+S <-c(26,35,41,18,26,35)
+MP <-c(7,7,4,4,4,4)
+C <-c(10,7,7,5,6,7)
+L <-c(5,4,6,6,5,6)
+KD <-c(6,6,5,5,5,5)
+M <-c(22,17,15,26,21,17)
+SD <-c(11,17,17,26,25,22)
+Oth <-c(1,1,1,2,3,1)
+t3 <-cbind.data.frame(kon,Age,S,SD,M,V,C,KD,MP,L,Oth)
+t33 <-kable(t3,format="latex")
+
+a <-pivot_longer(a,S:Oth)
+a <-a[,4:5]
+colnames(a) <-c("Party","Residuals")
+pp <-ggplot(a,aes(x=Party,y=Residuals))+
+  geom_point()+theme_bw()+scale_x_discrete(limits=(rev(positioner)))+ggtitle(label = "")+ylab("Poll error in percent units")+geom_hline(yintercept=0, linetype="dashed", 
+                color = "Black", size=0.5)
+pp
+```
+
+```{r  t-test independent}
+pvals <- list()
+
+# Loop through the binded data frames
+df_list <- list()
+
+# Loop through the binded data frames
+for (i in 1:4){
+  # Select every 8th row of the data frame
+  gf <- df[[i]]
+  
+  # Loop through the columns of the data frame
+  for(j in 1:9){
+    # Perform the t-test and store the p-value
+    pval <- t.test(gf[,j],mu=0)[3]
+    
+    # Add the p-value to the list
+    pvals[[length(pvals)+1]] <- pval
+  }
+}
+
+pvals <-do.call(rbind.data.frame, pvals)
+
+
+
+pvals <-cbind.data.frame(pvals$p.value[28:36],pvals$p.value[19:27],pvals$p.value[10:18],pvals$p.value[1:9])
+colnames(pvals) <-c("2010","2014","2018","2022")
+rownames(pvals) <-colnames(b)[1:9]
+
+pvals <-round(pvals,digits=3)
+pknull <-kable(pvals,format="latex")
+pknull
+```
+
+```{r bias ci independent}
+meanp <- list()
+
+# Loop through the binded data frames
+meanpp <- list()
+
+# Loop through the binded data frames
+for (i in 1:4){
+  # Select every 8th row of the data frame
+  gf <- df[[i]]
+  
+  # Loop through the columns of the data frame
+  for(j in 1:9){
+    # Perform the t-test and store the p-value
+    pkuk <- sum(gf[,j])/8
+    
+    # Add the p-value to the list
+    meanpp[[length(meanpp)+1]] <- pkuk
+  }
+}
+
+meanpp <-do.call(rbind.data.frame,meanpp)
+colnames(meanpp) <-"Mean"
+
+
+
+
+
+
+
+varp <- list()
+
+# Loop through the binded data frames
+varpp <- list()
+
+# Loop through the binded data frames
+for (i in 1:4){
+  # Select every 8th row of the data frame
+  gf <- df[[i]]
+  
+  # Loop through the columns of the data frame
+  for(j in 1:9){
+    # Perform the t-test and store the p-value
+    pvar <- sqrt(var(gf[,j]))
+    
+    # Add the p-value to the list
+    varpp[[length(varpp)+1]] <- pvar
+  }
+}
+
+qt <-qt(0.95,7)
+and <-sqrt(1-8/6547392)
+varpp <-t(as.data.frame(varpp))
+varpp <-as.data.frame(varpp)
+meanpp$LCL <-meanpp$Mean-qt*and*varpp$S/8
+meanpp$UCL <-meanpp$Mean+qt*and*varpp$S/8
+meanpp$Party <- rep(rev(positioner),length=9)
+meanpp$Year <-rep(c(2022,2018,2014,2010),each=9)
+meanpp <-arrange(meanpp,Year)
+meanpp <-meanpp[,c(2,1,3)]
+meanpp <-cbind.data.frame(meanpp[1:9,],meanpp[10:18,],meanpp[19:27,],meanpp[28:36,])
+row.names(meanpp) <-rev(positioner)
+meanpp <-kable(meanpp,format="latex")
+meanpp
+```
+
+
+
+```{r Funktioner}
+simulering <-function(k,n){
+  resultat1 <-sant
+
+resultat1 <-do.call("rbind", replicate(k, resultat1, simplify = FALSE))
+x <-as.data.frame(resultat1)
+t <-list()
+for(i in 1:k){
+  t[[i]] <-slice_sample(valet,n = n[i],replace = FALSE)
+}
+
+
+for(i in 1:k){
+x[i,] <-rbind.data.frame(t(count(t[[i]],Party)[,2]))
+colnames(x) <-c("C",   "KD",  "L",   "M",   "MP",  "Oth", "S",   "SD",  "V")
+}
+
+n<-n[1:k]
+x$N <-n
+x[,1:9] <-x[,1:9]/x$N
+x[,1:9] <-x[,1:9]*100
+
+
+for(i in 1:k){
+  x[i,1:9] <-x[i,1:9]-resultat1[i,1:9]
+}
+testare5 <-function(alla){
+ for(i in 1:9){
+    alla[,i] <-ifelse(alla[,i]>0,"Over","Under")
+  }
+  alla <-pivot_longer(alla,C:V)
+  t <-(count(alla,value,name))
+  colnames(t) <-c("Estimation","Party","n")
+  print(t)
+}
+
+x <-testare5(x)
+print(x)
+
+}
+
+
+kortsimulering<-function(k,n){
+  resultat1 <-sant
+
+resultat1 <-do.call("rbind", replicate(k, resultat1, simplify = FALSE))
+x <-as.data.frame(resultat1)
+t <-list()
+for(i in 1:k){
+  t[[i]] <-slice_sample(valet,n = n[i],replace = FALSE)
+}
+
+
+for(i in 1:k){
+x[i,] <-rbind.data.frame(t(count(t[[i]],Party)[,2]))
+colnames(x) <-c("C",   "KD",  "L",   "M",   "MP",  "Oth", "S",   "SD",  "V")
+}
+
+n<-n[1:k]
+x$N <-n
+x[,1:9] <-x[,1:9]/x$N
+x[,1:9] <-x[,1:9]*100
+
+
+for(i in 1:k){
+  x[i,1:9] <-x[i,1:9]-resultat1[i,1:9]
+}
+#testare5 <-function(alla){
+  #alla <-pivot_longer(alla,C:V)
+  #t <-(count(alla,value,name))
+ # colnames(t) <-c("Estimation","Party","n")
+ # print(t)
+#}
+
+#x <-testare5(x)
+print(x)
+
+}
+
+
+testa2 <-function(alla){
+  for(i in 1:9){
+    alla[,i] <-ifelse(alla[,i]>0,"Over","Under")
+  }
+  alla <-pivot_longer(alla,C:V)
+  t <-(count(alla,value,name))
+  colnames(t)[1:3] <-c("Estimation","Party","Count")
+  print(t)
+}
+```
+
+
+```{r Ba sampla helt vanligt}
+thevalues <- abs(sample(x =3000:12999,size = 925,replace = FALSE,prob = c(rep(0.01,10000))))
+nII <-na.omit(n)
+nII <-c(nII,thevalues)
+nII <-nII[!duplicated(nII)]
+nII <-nII[1:1000]
+
+
+
+a <-kortsimulering(1000,nII)
+b <-kortsimulering(8,nII)
+aa <-pivot_longer(a,C:V)
+colnames(aa) <-c("SampleSize","Party","Residual")
+
+ggplot(aa, aes(x=Party, y=Residual)) + 
+  geom_violin()+theme_bw()+scale_x_discrete(limits=rev(positioner))+
+  labs(subtitle = "Polls per Party: 1000")
+
+#P-värden
+pfit <-list()
+
+for(i in 1:9) {
+  # Subset the "Estimation" column to only include rows where "Party" is equal to the current value
+  estimation <- a[,i]
+  
+  # Check that the "Estimation" column is not empty
+  
+    # Perform the t-test and store the p-value
+    Pval <- t.test(estimation, mu = 0)$p.value
+    
+    # Add the p-value and party name to the list
+    pfit[[length(pfit) + 1]] <- list( Pval = Pval)
+  
+}
+
+
+pfit <-do.call(rbind.data.frame,pfit)
+
+pfit$Party <-c("C",   "KD",  "L",   "M",   "MP",  "Oth", "S",   "SD",  "V")
+pfit$Pval <-round(pfit$Pval,digits=3)
+pfit <-pfit[c(7,8,4,9,1,2,3,5,6),c(2,1)]
+pfithora <-kable(pfit,format="latex")
+binom <-function(n,k,p){
+  
+  ksuc <-(factorial(n))/(factorial(k)*factorial(n-k))*(p^k)*(1-p)^(n-k)
+  print(ksuc)
+}
+ab <-pivot_longer(a,C:V)
+ab$estimation <-ifelse(ab$value>0,"Over","Under")
+ab <-count(ab,estimation,name)
+ab$Pval <-binom(100,ab$n/10,0.5)
+ab$Pval <-round(ab$Pval,digits=3)
+colnames(ab) <-c("Estimation","Party","n","Pval")
+ggplot(ab, aes(x = Party, y = n,fill=Estimation)) +
+  geom_col() +
+  coord_flip()+theme_bw()+scale_fill_manual(values=(c("grey","black")))+
+  theme(axis.title.y = element_text(angle = 0))+ylab("Number of polls ")+ggtitle("Simulation Estimations of Parties in polls for 2022 election",subtitle = "Polls per party: 1000")+geom_text(aes(label = Pval),colour="white",hjust=0,position = position_stack(vjust=0.5))+scale_x_discrete(limits = positioner)
+
+
+
+
+
+hard <-pivot_longer(a,C:V)
+
+colnames(hard) <-c("Party","Residuals")
+ggplot(aa, aes(x=Party, y=Residual)) + 
+  geom_violin()+theme_bw()+scale_x_discrete(limits=rev(positioner))+
+  labs(subtitle = "Polls per Party: 1000")+  scale_y_continuous(breaks = seq(-5,4,by=0.5))+geom_hline(yintercept=0, linetype="dashed", 
+                color = "Black", size=0.5)
+
+B <-testa2(b[,1:9])
+B$Pval <-round(binom(8,B$Count,0.5),digits=2)
+
+
+
+ggplot(B, aes(x = Party, y = Count,fill=Estimation)) +
+  geom_col() +
+  coord_flip()+theme_bw()+scale_fill_manual(values=(c("grey","black")))+
+  theme(axis.title.y = element_text(angle = 0))+ylab("Number of polls ")+ggtitle("Simulation Estimations of Parties in polls for 2022 election",subtitle = "Polls per party: 8")+geom_text(aes(label = Pval),colour="white",hjust=0,position = position_stack(vjust=0.5))+scale_x_discrete(limits = positioner)
+
+
+qt <-qt(0.95,7)
+
+#Konfidensintervall
+
+sd <-aggregate(Residual ~ Party, data = aa,var)
+sd <-sqrt(sd$Residual)
+meansen <-aggregate(Residual ~ Party, data = aa,mean)
+
+meansen <-meansen[c(7,8,4,9,1,2,3,5,6),]
+meansen$LCL <-meansen$Residual-qt*sd/8
+meansen$UCL <-meansen$Residual+qt*sd/8
+meansen <-meansen[c(1,3,2,4)]
+
+meansen[,2:4] <-round(meansen[,2:4],digits = 2)
+
+kukar <-kable(meansen,format = "latex")
+kukar
+```
+
+
+
+```{r Smutsig,out.width="70%"}
+k = as.numeric(length(nII))
+t <- list()
+resultat1 <- santbre
+
+resultat1 <-
+  do.call("rbind", replicate(k, resultat1, simplify = FALSE))
+res <- as.data.frame(resultat1)
+smuts <-res
+stadad <-res
+
+samples <- list() # create an empty list to store the samples
+for(i in 1:1000) {
+ samp_idx <- valet %>% slice_sample(n = nII[i], replace = TRUE,weight_by = valet$PI)
+  samples[[i]] <- samp_idx # store the new data sample in the list
+}
+
+
+
+for(i in 1:k){
+smuts[i,] <-rbind.data.frame(t(count(samples[[i]],Party)[,2]))
+colnames(smuts) <-c("C",   "KD",  "L",   "M",   "MP",  "Oth", "S",   "SD",  "V")
+}
+
+
+
+
+smuts$n <-rowSums(smuts)
+smuts[,1:9] <-smuts[,1:9]/smuts$n
+smuts[,1:9] <-smuts[,1:9]*100
+smuts <-smuts[,1:9] 
+for(i in 1:k){
+  smuts[i,1:9] <-smuts[i,1:9]-res[i,1:9]
+}
+
+smutsigt <-pivot_longer(smuts,C:V)
+
+colnames(smutsigt) <-c("Party","Residuals")
+ggplot(smutsigt, aes(x=Party, y=Residuals)) + 
+  geom_violin()+theme_bw()+scale_x_discrete(limits=rev(positioner))+
+  labs(subtitle = "Polls per Party: 1000")+  scale_y_continuous(breaks = seq(-5,4,by=0.5))+geom_hline(yintercept=0, linetype="dashed", 
+                color = "Black", size=0.5)
+  
+
+smutsigtt <-testa2(smuts)
+  
+smutsigtt$Pval <-binom(100,smutsigtt$Count/10,0.5)  
+smutsigtt$Pval <-ifelse(smutsigtt$Pval<0.001,"P<0.001",smutsigtt$Pval)
+
+ggplot(smutsigtt, aes(x = Party, y = Count,fill=Estimation)) +
+  geom_col() +
+  coord_flip()+theme_bw()+scale_fill_manual(values=(c("grey","black")))+
+  theme(axis.title.y = element_text(angle = 0))+ylab("Number of polls ")+ggtitle("Simulation Estimations of Parties in polls for 2022 election",subtitle = "Polls per party: 1000")+geom_text(aes(label = Pval),colour="white",hjust=0,position = position_stack(vjust=0.1))+scale_x_discrete(limits = positioner)
+
+
+
+
+
+pfit <-list()
+
+for(i in 1:9) {
+  # Subset the "Estimation" column to only include rows where "Party" is equal to the current value
+  estimation <- smuts[,i]
+  
+  # Check that the "Estimation" column is not empty
+  
+    # Perform the t-test and store the p-value
+    Pval <- t.test(estimation, mu = 0)$p.value
+    
+    # Add the p-value and party name to the list
+    pfit[[length(pfit) + 1]] <- list( Pval = Pval)
+  
+}
+
+
+pfit <-do.call(rbind.data.frame,pfit)
+
+pfit$Party <-c("C",   "KD",  "L",   "M",   "MP",  "Oth", "S",   "SD",  "V")
+pfit$Pval <-round(pfit$Pval,digits=3)
+pfit <-pfit[c(7,8,4,9,1,2,3,5,6),c(2,1)]
+pfit$Pval <-ifelse(pfit$Pval<0.001,"P<0.001",pfit$Pval)
+pfithora <-kable(pfit,format="latex")
+pfithora
+
+
+
+
+medel <-pivot_longer(smuts,C:V)
+stderr<-pivot_longer(smuts,C:V)
+stdd <-aggregate(value~name,data = medel,FUN = var)
+stdd$value <-sqrt(stdd$value)
+
+medel <-aggregate(value~name,data = medel,FUN = mean)
+medel$UCL <-medel$value+qt*stdd$value/sqrt(8)
+medel$LCL <-medel$value-qt*stdd$value/sqrt(8)
+
+medel <-medel[,c(4,2,3)]
+colnames(medel) <-c("LCL","Estimation","UCL")
+rownames(medel) <-c("C",   "KD",  "L",   "M",   "MP",  "Oth", "S",   "SD",  "V")
+medel <-medel[rev(positioner),]
+medel <-round(medel,digits=2)
+knlla <-kable(medel,format="latex")
+knlla
+```
+
+
+
+```{r Halvtsmutsig}
+mod_mat <- model.matrix(~ as.factor(Partysize)+as.factor(Sex)+as.factor(PolI), valet)
+
+pop_vector <- colSums(mod_mat)
+
+k = as.numeric(length(nII))
+t <- list()
+
+
+samples <- list() # create an empty list to store the samples
+for(i in 1:1000) {
+ samp_idx <- valet %>% slice_sample(n = nII[i], replace = TRUE,weight_by = valet$PI)
+  t[[i]] <- samp_idx # store the new data sample in the list
+}
+
+
+
+
+fpcs <-list()
+dclus1 <-list()
+
+for (i in 1:k){
+
+  fpcs[[i]] = rep(length(valet$Sex), each = nII[i])
+  
+  for (j in 1:8) {
+    # Create the j-th sub-list
+    sub_sub_list <- list(1, 2, 3)
+
+    # Store the j-th sub-list in the sub_list list
+    dclus1[[j]] <- sub_sub_list
+  }
+  dclus1[[i]] <-
+    svydesign(
+      id =  ~ 1,
+      weights =  ~ 1,
+      data = t[[i]],
+      fpc = fpcs[[i]]
+    )
+  dclus1g <-list(1:length(nII))
+  dclus1g[[i]] <- calibrate(
+  dclus1[[i]],
+  formula = ~ as.factor(Partysize)+as.factor(Sex)+as.factor(PolI),
+  population = pop_vector
+)
+  t[[i]] <-svymean(~Party,dclus1g[[i]])
+}
+
+
+
+for(i in 1:k){
+stadad[i,] <-rbind.data.frame(t[[i]])
+colnames(stadad) <-c("C",   "KD",  "L",   "M",   "MP",  "Oth", "S",   "SD",  "V")
+}
+
+
+
+for(i in 1:k){
+  stadad[i,1:9] <-(stadad[i,1:9]*100-res[i,1:9])
+}
+
+
+
+medel <-pivot_longer(stadad,C:V)
+stderr<-pivot_longer(stadad,C:V)
+stdd <-aggregate(value~name,data = medel,FUN = var)
+stdd$value <-sqrt(stdd$value)
+
+medel <-aggregate(value~name,data = medel,FUN = mean)
+medel$UCL <-medel$value+qt*stdd$value/sqrt(8)
+medel$LCL <-medel$value-qt*stdd$value/sqrt(8)
+
+medel <-medel[,c(4,2,3)]
+colnames(medel) <-c("LCL","Estimation","UCL")
+rownames(medel) <-c("C",   "KD",  "L",   "M",   "MP",  "Oth", "S",   "SD",  "V")
+medel <-medel[rev(positioner),]
+medel <-round(medel,digits=2)
+knlla <-kable(medel,format="latex")
+knlla
+
+
+
+
+stadadigt <-testa2(stadad)
+  
+stadadigt$Pval <-round(binom(100,stadadigt$Count/10,0.5),digits=2)  
+stadadigt$Pval <-ifelse(stadadigt$Pval<0.001,"P<0.001",stadadigt$Pval)
+
+ggplot(stadadigt, aes(x = Party, y = Count,fill=Estimation)) +
+  geom_col() +
+  coord_flip()+theme_bw()+scale_fill_manual(values=(c("grey","black")))+
+  theme(axis.title.y = element_text(angle = 0))+ylab("Number of polls ")+ggtitle("Simulation Estimations of Parties in polls for 2022 election",subtitle = "Polls per party: 1000")+geom_text(aes(label = Pval),colour="white",hjust=0,position = position_stack(vjust=0.1))+scale_x_discrete(limits = positioner)
+
+
+pfit <-list()
+
+for(i in 1:9) {
+  # Subset the "Estimation" column to only include rows where "Party" is equal to the current value
+  estimation <- stadad[,i]
+  
+  # Check that the "Estimation" column is not empty
+  
+    # Perform the t-test and store the p-value
+    Pval <- t.test(estimation, mu = 0)$p.value
+    
+    # Add the p-value and party name to the list
+    pfit[[length(pfit) + 1]] <- list( Pval = Pval)
+  
+}
+
+
+
+
+pfit <-do.call(rbind.data.frame,pfit)
+pfit$Party <-colnames(stadad)
+pfit <-pfit[c(7,8,4,9,1,2,3,5,6),c(2,1)]
+pfit$Pval <-round(pfit$Pval,digits=3)
+pfitta <-kable(pfit,format = "latex")
+pfitta
+
+
+stadad <-pivot_longer(stadad,C:V)
+colnames(stadad) <-c("Party","Residuals")
+ggplot(stadad, aes(x=Party, y=Residuals)) + 
+  geom_violin()+theme_bw()+scale_x_discrete(limits=rev(positioner))+
+  labs(subtitle = "Polls per Party: 1000")+
+  scale_y_continuous(breaks = seq(-5,4,by=0.5))+geom_hline(yintercept=0, linetype="dashed", 
+                color = "Black", size=0.5)
+```
+
+
+
+
+
+
+
+
+
+
+
+

@@ -406,13 +406,13 @@ df[[i]] <-df[[i]][,c(12,1:8,9,10,11)]
 
 #Tabell 1
 
-fittan <-df[[1]][c(1:9,12,11)]
-andra <-fittan[,c(10:11)]
-fittan <-fittan[,1:9]
-fittan <-fittan[rev(positioner)]
-fittan <-cbind(fittan,andra)
-fittan <-kable(fittan,format="latex")
-fittan
+latingn <-df[[1]][c(1:9,12,11)]
+andra <-latingn[,c(10:11)]
+latingn <-latingn[,1:9]
+latingn <-latingn[rev(positioner)]
+latingn <-cbind(latingn,andra)
+latingn <-kable(latingn,format="latex")
+latingn
 
 
 resultat1 <-c(1.54,19.10,4.61,6.71,5.34, 30.33,6.75,5.08,20.54)
@@ -548,8 +548,8 @@ colnames(pvals) <-c("2010","2014","2018","2022")
 rownames(pvals) <-colnames(b)[1:9]
 
 pvals <-round(pvals,digits=3)
-pknull <-kable(pvals,format="latex")
-pknull
+pbra <-kable(pvals,format="latex")
+pbra
 ```
 
 ```{r bias ci independent}
@@ -566,10 +566,10 @@ for (i in 1:4){
   # Loop through the columns of the data frame
   for(j in 1:9){
     # Perform the t-test and store the p-value
-    pkuk <- sum(gf[,j])/8
+    pmogel <- sum(gf[,j])/8
     
     # Add the p-value to the list
-    meanpp[[length(meanpp)+1]] <- pkuk
+    meanpp[[length(meanpp)+1]] <- pmogel
   }
 }
 
@@ -753,7 +753,7 @@ pfit <-do.call(rbind.data.frame,pfit)
 pfit$Party <-c("C",   "KD",  "L",   "M",   "MP",  "Oth", "S",   "SD",  "V")
 pfit$Pval <-round(pfit$Pval,digits=3)
 pfit <-pfit[c(7,8,4,9,1,2,3,5,6),c(2,1)]
-pfithora <-kable(pfit,format="latex")
+pfith <-kable(pfit,format="latex")
 binom <-function(n,k,p){
   
   ksuc <-(factorial(n))/(factorial(k)*factorial(n-k))*(p^k)*(1-p)^(n-k)
@@ -808,8 +808,8 @@ meansen <-meansen[c(1,3,2,4)]
 
 meansen[,2:4] <-round(meansen[,2:4],digits = 2)
 
-kukar <-kable(meansen,format = "latex")
-kukar
+mogelar <-kable(meansen,format = "latex")
+mogelar
 ```
 
 
@@ -895,8 +895,8 @@ pfit$Party <-c("C",   "KD",  "L",   "M",   "MP",  "Oth", "S",   "SD",  "V")
 pfit$Pval <-round(pfit$Pval,digits=3)
 pfit <-pfit[c(7,8,4,9,1,2,3,5,6),c(2,1)]
 pfit$Pval <-ifelse(pfit$Pval<0.001,"P<0.001",pfit$Pval)
-pfithora <-kable(pfit,format="latex")
-pfithora
+pfith <-kable(pfit,format="latex")
+pfith
 
 
 
@@ -915,8 +915,8 @@ colnames(medel) <-c("LCL","Estimation","UCL")
 rownames(medel) <-c("C",   "KD",  "L",   "M",   "MP",  "Oth", "S",   "SD",  "V")
 medel <-medel[rev(positioner),]
 medel <-round(medel,digits=2)
-knlla <-kable(medel,format="latex")
-knlla
+tablett <-kable(medel,format="latex")
+tablett
 ```
 
 
@@ -998,8 +998,8 @@ colnames(medel) <-c("LCL","Estimation","UCL")
 rownames(medel) <-c("C",   "KD",  "L",   "M",   "MP",  "Oth", "S",   "SD",  "V")
 medel <-medel[rev(positioner),]
 medel <-round(medel,digits=2)
-knlla <-kable(medel,format="latex")
-knlla
+tablett <-kable(medel,format="latex")
+tablett
 
 
 
@@ -1038,8 +1038,8 @@ pfit <-do.call(rbind.data.frame,pfit)
 pfit$Party <-colnames(stadad)
 pfit <-pfit[c(7,8,4,9,1,2,3,5,6),c(2,1)]
 pfit$Pval <-round(pfit$Pval,digits=3)
-pfitta <-kable(pfit,format = "latex")
-pfitta
+plating <-kable(pfit,format = "latex")
+plating
 
 
 stadad <-pivot_longer(stadad,C:V)
